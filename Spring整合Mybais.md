@@ -358,7 +358,7 @@ Spring整合Mybatis就是将Mybatis核心配置文件交由Spring配置文件来
 >  上面的配置文件主要做了三件事：
 >
 >  > 1. 通过SpringJDBC 创建dataSource(数据源)，替换掉了Mybatis核心配置文件的**environment**标签里的内容
->  > 2. 将SqlSessionFactoryBean(即我们Mybatis的SqlSessionFactory)类注入Spring容器。其中SqlSessionFactoryBean类需要指定一个数据源，也即我们上一步连接JDBC的数据源。另外，SqlSessionFactoryBean类还可以导入之前Mybatis的核心配置文件(主要是一些settings或typeAliases 当然还可以放Mappers) 但其实这些都可以在SqlSessionFactoryBean中进行配置，也即可以完全抛弃之前的mybatis-config.xml配置文件。但为了避免耦合性，我们还是保留了Mybatis的配置文件，但让他只做一些Mybatis的个性化配置。
+>  > 2. 将SqlSessionFactoryBean(即我们Mybatis的SqlSessionFactory)类注入Spring容器。其中SqlSessionFactoryBean类需要指定一个数据源，也即我们上一步连接JDBC的数据源。另外，SqlSessionFactoryBean类还可以导入之前Mybatis的核心配置文件(主要是一些settings或typeAliases 当然还可以放Mappers) 但其实这些都可以在SqlSessionFactoryBean中进行配置，也即可以完全抛弃之前的mybatis-config.xml配置文件。但为了避免耦合性，我还是保留了Mybatis的配置文件，但让他只做一些Mybatis的个性化配置。
 >  > 3. 将SqlSessionTemplate(即我们Mybatis的SqlSession)类注入Spring中，SqlSessionTemplate类的注入必须指出一个包含SqlSessionFactory的初始化，且只能构造器注入，也不难理解，因为我们之前在Mybatis中得到SqlSession也是通过sqlSessionFactory.openSession()
 >
 >* 3. 编写Mybatis核心配置文件
