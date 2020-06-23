@@ -18,7 +18,7 @@ IOC即控制反转(Inversion of Control)
 
 ## DI
 
- DI即依赖注入(Dependency Injection)，他是 控制反转的一种实现方式。
+ DI即依赖注入(Dependency Injection)，他是控制反转的一种实现方式。
 
 依赖注入分为两个词：**依赖**和**注入**。
 
@@ -87,7 +87,7 @@ public class ServiceN{
 }
 ```
 
-这样你在n个函数里加了日志功能，输出到文件。
+这样你在n个类里加了日志功能，输出到文件。
 
  突然有一天需求变了，不再是输出到文件了，要求输出到控制台，这时你不可能去替换每个类里的log，而且就算这次全替换了，下次再改成打印输出到服务器怎么办？ 
 之所以这里每个类都需要改，是因为我们每个类依赖的日志功能都自己去实现了，那我们可不可以不自己实现，实现由统一的地方来控制。这样改的时候，我只需要改统一的地方就好了。
@@ -163,9 +163,9 @@ public class LoggerFactory {
 ```java
 public class LoggerFactory {
     private static ILogger logger = new ServerLogger();
-   public static ILogger createLogger() {
-      return logger ;
-   }
+    public static ILogger createLogger() {
+        return logger ;
+    }
 }
 ```
 

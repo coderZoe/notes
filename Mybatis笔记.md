@@ -162,7 +162,7 @@ public interface UserMapper {
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.coderzoe.dao.UserMapper">
-        <select id="getUserList" resultType="com.coderzoe.entity.User">
+    <select id="getUserList" resultType="com.coderzoe.entity.User">
         select * from smbms.user
     </select>
 </mapper>
@@ -242,22 +242,21 @@ public class UserMapperTest {
 #### 1.2 配置核心配置文件
 
 ```xml
-<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE configuration
   PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
-  <environments default="development">
-    <environment id="development">
-      <transactionManager type="JDBC"/>
-      <dataSource type="POOLED">
-        <property name="driver" value="com.mysql.jdbc.Driver"/>
-        <property name="url" value="jdbc:mysql://localhost:3306/smbms?useSSL=false&useUnicode=true&characterEncoding=UTF-8"/>
-        <property name="username" value="root"/>
-        <property name="password" value="123456"/>
-      </dataSource>
-    </environment>
-  </environments>
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/smbms?useSSL=false&useUnicode=true&characterEncoding=UTF-8"/>
+                <property name="username" value="root"/>
+                <property name="password" value="123456"/>
+            </dataSource>
+        </environment>
+    </environments>
 </configuration>
 ```
 
@@ -281,11 +280,11 @@ public class UserMapperTest {
 ```
 
 ```xml
-<!-- 配置JDBC连接 -->
-<property name="driver" value="${driver}"/>
-<property name="url" value="${url}"/>
-<property name="username" value="${username}"/>
-<property name="password" value="${password}"/>
+<!-- JDBC连接参数 -->
+<property name="driver" value="com.mysql.jdbc.Driver"/>
+<property name="url" value="jdbc:mysql://localhost:3306/smbms?                  useSSL=false&useUnicode=true&characterEncoding=UTF-8"/>
+<property name="username" value="root"/>
+<property name="password" value="123456"/>
 ```
 
 #### 1.3编写工具类
@@ -439,25 +438,25 @@ public interface UserMapper {
 </mapper>
 ```
 
-将xml文件注册到Mybatis核心配置文件中：
+**将xml文件注册到Mybatis核心配置文件中：**
 
 ```xml
-    <mappers>
-        <mapper resource="com/coderzoe/dao/UserMapper.xml"/>
-    </mappers>
+<mappers>
+    <mapper resource="com/coderzoe/dao/UserMapper.xml"/>
+</mappers>
 ```
 
 测试：
 
 ```java
-    @Test
-    public void test(){
-        SqlSession sqlSession = MybatisUtil.getSqlSession();
-        UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
-        List<User> userList = userMapper.getUserList();
-        System.out.println(userList);
-        MybatisUtil.closeSqlSession();
-    }
+@Test
+public void test(){
+    SqlSession sqlSession = MybatisUtil.getSqlSession();
+    UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+    List<User> userList = userMapper.getUserList();
+    System.out.println(userList);
+    MybatisUtil.closeSqlSession();
+}
 ```
 
 **说明：**
@@ -1106,7 +1105,630 @@ select * from blog where id in (param1,param2,param3...)
 
 ### 5. 多表联查
 
+多表联查无外乎两种情况，**多对一和一对多**
+
+#### 5.1 多对一
+
+需求：
+
+> 当前有老师学生表，假设当前我们多个学生对于一个老师
+>
+> 现在要求：
+>
+> > 查询出学生表所有信息，并查出每个学生对应的老师信息
+
+学生表：
+
+![image-20200623102719847](C:\Users\90617\AppData\Roaming\Typora\typora-user-images\image-20200623102719847.png)
+
+外键tid关联老师表的id
+
+![image-20200623102755152](C:\Users\90617\AppData\Roaming\Typora\typora-user-images\image-20200623102755152.png)
+
+老师表：
+
+![image-20200623102827686](C:\Users\90617\AppData\Roaming\Typora\typora-user-images\image-20200623102827686.png)
+
+创建实体类
+
+```java
+package com.coderzoe.entity;
+
+/**
+ * @author yhs
+ * @date 2020/5/26 20:33
+ * @description
+ */
+public class Student {
+    private int id;
+    private String name;
+    //外键
+    private Teacher teacher;
+    public Student() {
+    }
+
+
+    public Student(int id, String name, Teacher teacher) {
+        this.id = id;
+        this.name = name;
+        this.teacher = teacher;
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", teacher=" + teacher +
+                '}';
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
+    public Teacher getTeacher() {
+        return teacher;
+    }
+
+    public void setTeacher(Teacher teacher) {
+        this.teacher = teacher;
+    }
+}
+
+```
+
+
+
+```java
+package com.coderzoe.entity;
+
+/**
+ * @author yhs
+ * @date 2020/5/26 20:32
+ * @description
+ */
+public class Teacher {
+    private int id;
+    private String name;
+
+    public Teacher() {
+    }
+
+    public Teacher(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "Teacher{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+```
+
+创建Dao层接口
+
+```java
+package com.coderzoe.dao;
+
+import com.coderzoe.entity.Student;
+
+import java.util.List;
+
+/**
+ * @author yhs
+ * @date 2020/5/26 20:35
+ * @description
+ */
+public interface StudentMapper {
+
+    /**
+     * @data: 2020/05/26 21:54
+     * @author: yhs
+     * @return: {@link List<Student> }
+     * @description: 按查询 查询所有的学生和对应的老师信息
+     */
+    List<Student> findStudentsInfo();
+    
+}
+
+```
+
+创建实现接口的xml
+
+```xml
+<resultMap id="studentAndTeacher" type="com.coderzoe.entity.Student">
+    <result property="id" column="id"/>
+    <result property="name" column="name"/>
+    <!-- 复杂的属性 我们需要单独处理
+             对象:association
+             集合:collection
+         -->
+    <association property="teacher" column="tid" javaType="com.coderzoe.entity.Teacher" select="getTeacher"/>
+</resultMap>
+<select id="findStudentsInfo" resultMap="studentAndTeacher">
+    select * from student
+</select>
+<select id="getTeacher" resultType="com.coderzoe.entity.Teacher">
+    select * from teacher where id = #{tid}
+</select>
+```
+
+测试
+
+```java
+@Test
+public void findStudentsInfo(){
+    SqlSession sqlSession = MybatisUtil.getSqlSession();
+    StudentMapper mapper = sqlSession.getMapper(StudentMapper.class);
+    List<Student> studentsInfo = mapper.findStudentsInfo();
+    System.out.println(studentsInfo);
+    MybatisUtil.closeSqlSession();
+}
+```
+
+这里xml中用到了<resultMap></resultMap>标签，这个标签应该是Mybatis最重要的一个标签。对于数据库的表字段，可能往往与我们的实体类并不对应，比如学生表中是tid，而学生实体类中是Teacher类，这时就需要自己将数据库字段与实体类一一对应，所用到的就是<resultMap></resultMap>标签。
+
+<resultMap>中的`id`用于唯一标识这个标签，属性`type`指的是返回类型，即我们实际需要对应的实体表，下面的每一个<result>标签将实体类与数据库表的字段一一对应。<result>标签的<code>property</code>属性指的是当前实体类的属性名，`column`属性指的是数据库列的列名。
+
+<association>标签用于当前字段是对象，比如当前学生表teacher变量是一个Teacher对象。与<resultMap>相同，<code>property</code>属性指当前属性名，`column`属性指的是数据库列的列名。`javaType`属性指的是当前属性对应的Java对象类型。`select`属性指的是要执行的SQL语句，传入的是SQL语句的id。
+
+```xml
+<select id="getTeacher" resultType="com.coderzoe.entity.Teacher">
+    select * from teacher where id = #{tid}
+</select>
+```
+
+**getTeacher**语句通过传进来的id查询teacher表，返回Teacher对象。
+
+**整个流程：**
+
+```xml
+<select id="findStudentsInfo" resultMap="studentAndTeacher">
+    select * from student
+</select>
+```
+
+查询当前所有学生表信息，返回类型为自己定义的**resultMap**。
+
+```xml
+<resultMap id="studentAndTeacher" type="com.coderzoe.entity.Student">
+    <result property="id" column="id"/>
+    <result property="name" column="name"/>
+    <!-- 复杂的属性 我们需要单独处理
+             对象:association
+             集合:collection
+         -->
+    <association property="teacher" column="tid" javaType="com.coderzoe.entity.Teacher" select="getTeacher"/>
+</resultMap>
+```
+
+<resultMap>标签将数据库字段与自己的实体类做了关联映射，通过上一步的查询数据库所有信息得到数据库表信息，再按数据库字段，将数据库表信息转化为实体类信息，涉及到不一致的如实体类或集合，需要映射。
+
+<association>作用就是将数据库字段映射为实体类对象，通过数据库的tid参数，执行SQL语句
+
+```xml
+<select id="getTeacher" resultType="com.coderzoe.entity.Teacher">
+    select * from teacher where id = #{tid}
+</select>
+```
+
+这里的`#{tid}`就是我们刚才 `column="tid"`传入的。执行SQL语句，将tid转为Teacher对象，完成<association>标签的映射。
+
+**除了这种方法外，还有另一种直观的方法：**
+
+```xml
+<resultMap id="studentAndTeacher" type="com.coderzoe.entity.Student">
+    <result property="id" column="sid"/>
+    <result property="name" column="sname"/>
+    <association property="teacher" javaType="com.coderzoe.entity.Teacher">
+        <result property="name" column="tname"/>
+    </association>
+</resultMap>
+<select id="findStudentsInfo" resultMap="studentAndTeacher">
+    select s.id sid,s.name sname,t.name  tname from student s,teacher t where s.tid = t.id;
+</select>
+```
+
+通过SQL语句
+
+```sql
+select s.id sid,s.name sname,t.name  tname from student s,teacher t where s.tid = t.id;
+```
+
+先联表查出所有的字段，然后通过<resultMap>标签将查出的数据库字段与实体类对应。
+
+#### 5.2  一对多
+
+> 与刚才一样，对于老师而言，每个老师对应多个学生，现在要求：
+>
+> > 查询当前老师的信息，与他教的所有学生的信息
+
+数据库学生表与老师表不变。
+
+实体类：
+
+```java
+package com.coderzoe.entity;
+
+/**
+ * @author yhs
+ * @date 2020/5/28 21:02
+ * @description
+ */
+public class NewStudent {
+    private int id;
+    private String name;
+    private int tid;
+
+    public NewStudent() {
+    }
+
+    @Override
+    public String toString() {
+        return "NewStudent{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", tid=" + tid +
+                '}';
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getTid() {
+        return tid;
+    }
+
+    public void setTid(int tid) {
+        this.tid = tid;
+    }
+}
+
+```
+
+```java
+package com.coderzoe.entity;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author yhs
+ * @date 2020/5/28 21:02
+ * @description
+ */
+public class NewTeacher {
+    private int id;
+    private String name;
+    private List<Student> studentList = new ArrayList<>();
+
+    public NewTeacher() {
+    }
+
+    @Override
+    public String toString() {
+        return "NewTeacher{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", studentList=" + studentList +
+                '}';
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<Student> getStudentList() {
+        return studentList;
+    }
+
+    public void setStudentList(List<Student> studentList) {
+        this.studentList = studentList;
+    }
+}
+
+```
+
+Dao层接口
+
+```java
+package com.coderzoe.dao;
+
+import com.coderzoe.entity.NewTeacher;
+
+import java.util.List;
+
+/**
+ * @author yhs
+ * @date 2020/5/26 20:35
+ * @description
+ */
+public interface TeacherMapper {
+    List<NewTeacher> getNewTeacher();
+}
+```
+xml实现
+```xml
+<resultMap id="studentsAndTeacher" type="com.coderzoe.entity.NewTeacher">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <collection property="studentList" column="id" javaType="ArrayList" ofType="com.coderzoe.entity.NewStudent" select="getStudents"/>
+    </resultMap>
+    <select id="getNewTeacher" resultMap="studentsAndTeacher">
+        select * from teacher
+    </select>
+    <select id="getStudents" resultType="com.coderzoe.entity.NewStudent">
+        select * from student where tid = #{id};
+    </select>
+```
+
+测试
+
+```java
+@Test
+public void findNewTeachers(){
+    SqlSession sqlSession = MybatisUtil.getSqlSession();
+    TeacherMapper mapper = sqlSession.getMapper(TeacherMapper.class);
+    List<NewTeacher> newTeacher = mapper.getNewTeacher();
+    System.out.println(newTeacher);
+    MybatisUtil.closeSqlSession();
+}
+```
+
+可以看到与刚才的一对多基本一样，唯一的不同是刚才的<resultMap>标签里使用的是<association>现在我们使用的是 <collection>。因为刚才每一个学生对应一个老师，现在每一个老师对应多个学生，Teacher对象里的student属性是集合，不再是对象。<collection>标签的`ofType`属性指的是当前集合元素的类型。
+
+当然，这里也可以用方法二：
+
+```xml
+<resultMap id="studentsAndTeacher" type="com.coderzoe.entity.NewTeacher">
+    <result property="id" column="tid"/>
+    <result property="name" column="tname"/>
+    <collection property="studentList" ofType="com.coderzoe.entity.NewStudent">
+        <result property="id" column="sid"/>
+        <result property="name" column="sname"/>
+        <result property="tid" column="tid"/>
+    </collection>
+</resultMap>
+<select id="getNewTeacher" resultMap="studentsAndTeacher">
+    select s.id sid, s.name sname,t.name tname, t.id tid from student s,teacher t
+    where s.tid = t.id;
+</select>
+```
+
+#### 5.3 resultMap
+
+上面我们已经使用了<resultMap>标签，可以看到这个标签的核心作用是将Mybatis无法转化的**对象-数据库**映射，自己手动映射。我们都知道，框架的实现底层都是反射，Mybatis也一样，在你用Mybatis自动实现ORM的时候，Mybatis会按数据库的字段名查找，找到实体类的属性名一样的，一样的则匹配，否则匹配不上。在实际开发中，我们往往数据库字段名与实体类属性变量名并不一致，这时就需要手动映射。
+
+数据库表：
+
+![image-20200623142204939](C:\Users\90617\AppData\Roaming\Typora\typora-user-images\image-20200623142204939.png)
+
+实体类：
+
+```java
+package com.coderzoe.entity;
+
+/**
+ * @author yhs
+ * @date 2020/5/22 20:57
+ * @description
+ */
+public class UserInfo {
+    private int id;
+    private String familyName;
+    private String firstName;
+
+    public UserInfo() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+
+    @Override
+    public String toString() {
+        return "UserInfo{" +
+                "id=" + id +
+                ", familyName='" + familyName + '\'' +
+                ", firstName='" + firstName + '\'' +
+                '}';
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getFamilyName() {
+        return familyName;
+    }
+
+    public void setFamilyName(String familyName) {
+        this.familyName = familyName;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+}
+
+```
+
+Dao层接口
+
+```java
+package com.coderzoe.dao;
+
+import com.coderzoe.entity.UserInfo;
+
+import java.util.List;
+
+/**
+ * @author yhs
+ * @date 2020/5/22 20:59
+ * @description
+ */
+public interface UserInfoMapper {
+    List<UserInfo> getAllUserInfo();
+}
+
+```
+
+xml实现
+
+```xml
+<resultMap id="UserMap" type="com.coderzoe.entity.UserInfo">
+    <result column="id" property="id"/>
+    <result column="family_name" property="familyName"/>
+    <result column="first_name" property="firstName"/>
+</resultMap>
+<!-- 也可以通过setting设置开启驼峰转化 -->
+<select id="getAllUserInfo" resultType="com.coderzoe.entity.UserInfo">
+    select * from user_info
+</select>
+```
+
+测试：
+
+```java
+@Test
+public void getUserList(){
+    SqlSession sqlSession = MybatisUtil.getSqlSession();
+    UserInfoMapper mapper = sqlSession.getMapper(UserInfoMapper.class);
+    List<UserInfo> allUserInfo = mapper.getAllUserInfo();
+    System.out.println(allUserInfo);
+}
+```
+
+但在实际开发中，Java一般都是驼峰式命名，而数据库也都是下划线分隔开的，我们总不能每一个实体类都自己转化，那和使用JDBC也差不多了。好在Mybatis配置文件有一个设置，开启驼峰转化后，就不再需要我们自己手动匹配。
+
+```xml
+<settings>
+    <!-- 配置开启驼峰 -->
+    <setting name="mapUnderscoreToCamelCase" value="true"/>
+</settings>
+```
+
+
+
 ### 6. 使用注解开发
+
+xml里一些简单的sql语句，我们也可以用注解进行开发。
+
+比如之前的User对象，只是一些简单的增删改查，我们可以用注解来实现，不再需要xml。
+
+```java
+package com.coderzoe.dao;
+
+import com.coderzoe.entity.User;
+import org.apache.ibatis.annotations.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @author yhs
+ * @date 2020/5/19 22:06
+ * @description User的Dao层
+ */
+public interface UserMapper {
+    /**
+     * 使用注解开发
+     */
+    @Select("select * from user")
+    List<User> getUsers();
+
+
+    /**
+     * @param
+     * @param
+     * @data: 2020/05/26 17:38
+     * @author: yhs
+     * @return: {@link User }
+     * @description:  有多个参数 需要@Param注解
+     *                @Param注解也可以用在xml中 换句话说 多个参数 可以在Mapper里写@param注解 然后在xml里使用注解 这样就不用传参map了
+     *                sql语句中的#{id} #{name} 要求与@param注解的名字一样
+     */
+    @Select("select * from user where id = #{id} and name = #{name}")
+    User getUserByIdAndName(@Param("id")long id,@Param("name")String name);
+
+    @Insert("insert into user(id,name,password) values(#{id},#{name},#{password})")
+    int insertUser3(User user);
+
+    @Update("update user set name = #{name},password = #{password} where id = #{id}")
+    int updateUser(User user);
+
+    @Delete("delete from user where id = #{id}")
+    int deleteUser(@Param("id") long id);
+}
+
+```
+
+
 
 ### 7. Mybatis核心配置文件
 
@@ -1324,8 +1946,6 @@ Mybatis settings标签内容非常多，主要提供的是一些Mybatis的配置
      * xml配置文件要和接口在同一个包下
 
 ## Mybatis-Plus
-
-
 
 
 
